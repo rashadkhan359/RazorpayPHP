@@ -2,6 +2,7 @@
 
 namespace App;
 
+use EmailService;
 use Exception;
 use Razorpay\Api\Api;
 
@@ -9,11 +10,13 @@ class PaymentProcessor
 {
     private $api;
     private $db;
+    private $emailService;
 
     public function __construct(array $config, $db)
     {
         $this->api = new Api($config['key_id'], $config['key_secret']);
         $this->db = $db;
+        // $this->emailService = new EmailService($config['email']);
     }
 
     public function createOrder($amount, $currency)
@@ -56,6 +59,22 @@ class PaymentProcessor
 
             // Fetch payment details from Razorpay
             $paymentDetails = $this->api->payment->fetch($paymentId);
+            info($paymentDetails);
+
+            // Send email notification
+            // $emailData = [
+            //     'status' => 'success',
+            //     'payment_id' => $paymentId,
+            //     'order_id' => $orderId,
+            //     'name' => $paymentData['name'],
+            //     'email' => $paymentData['email'],
+            //     'amount' => $payment['amount'],
+            //     'currency' => $payment['currency'],
+            //     'payment_method' => $paymentDetails->method,
+            // ];
+
+            // $this->emailService->sendPaymentNotification($emailData);
+
             return [
                 'verified' => true,
                 'payment_details' => [
@@ -113,31 +132,46 @@ class PaymentProcessor
 
     private function sanitizeTransactionData($data)
     {
-        return [
-            'payment_id' => strip_tags($data['payment_id']),
-            'order_id' => strip_tags($data['order_id']),
-            'name' => htmlspecialchars($data['name'], ENT_QUOTES, 'UTF-8'),
-            'email' => filter_var($data['email'], FILTER_SANITIZE_EMAIL),
-            'tel' => strip_tags($data['tel']),
-            'address' => strip_tags($data['address']),
-            'address2' => strip_tags($data['address2']),
-            'city' => strip_tags($data['city']),
-            'state' => strip_tags($data['state']),
-            'zip_code' => strip_tags($data['zip_code']),
-            'country' => strip_tags($data['country']),
-            'amount' => filter_var($data['amount'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION),
-            'currency_type' => strip_tags($data['currency_type']),
-            'status' => strip_tags($data['status']),
-            'payment_method' => strip_tags($data['payment_method']),
-            'card_network' => strip_tags($data['card_network'] ?? null),
-            'card_last4' => strip_tags($data['card_last4'] ?? null),
-            'card_issuer' => strip_tags($data['card_issuer'] ?? null),
-            'card_type' => strip_tags($data['card_type'] ?? null),
-            'bank_name' => strip_tags($data['bank_name'] ?? null),
-            'wallet_type' => strip_tags($data['wallet_type'] ?? null),
-            'vpa' => strip_tags($data['vpa'] ?? null),
-            'error_message' => strip_tags($data['error_message'] ?? null)
+        $rules = [
+            'payment_id' => ['required', 'string'],
+            'order_id' => ['required', 'string'],
+            'name' => ['required', 'string'],
+            'email' => ['required', 'email'],
+            'tel' => ['string'],
+            'address' => ['string'],
+            'address2' => ['string'],
+            'city' => ['string'],
+            'state' => ['string'],
+            'zip_code' => ['string'],
+            'country' => ['string'],
+            'amount' => ['required', 'numeric', 'min:0'],
+            'currency_type' => ['required', 'string', 'in:INR,AUD,USD,GBP,CAD,EUR,SGD'],
+            'status' => ['required', 'string'],
+            'payment_method' => ['required', 'string'],
+            'card_network' => ['string'],
+            'card_last4' => ['string'],
+            'card_issuer' => ['string'],
+            'card_type' => ['string'],
+            'bank_name' => ['string'],
+            'wallet_type' => ['string'],
+            'vpa' => ['string'],
+            'error_message' => ['string']
         ];
+        // Validate and sanitize
+        $validator = validate($data, $rules);
+
+        if (!$validator->validate()) {
+            // Log validation errors
+            $errors = $validator->errors();
+            $errorMessage = "Validation failed: " . json_encode($errors);
+            logPaymentError($errorMessage);
+
+            // Throw exception or handle errors as needed
+            throw new \InvalidArgumentException($errorMessage);
+        }
+
+        // Get sanitized data
+        return $validator->sanitized();
     }
 
     public function logPaymentDetails($eventType, $data)
@@ -208,24 +242,23 @@ class PaymentProcessor
     public function getTransactionDetails($paymentId)
     {
         try {
-            $sql = "SELECT * FROM payment_transactions WHERE payment_id = :payment_id";
-            $result = $this->db->query($sql, ['payment_id' => $paymentId]);
+            // Fetch the transaction details by payment_id
+            $sql = "SELECT * FROM payment_transactions WHERE payment_id = :payment_id LIMIT 1";
+            $this->db->query($sql, ['payment_id' => $paymentId]);
+            $transaction = $this->db->find(); // Use find() to get the first result
 
-            if (!$result) {
-                throw new Exception("Transaction not found");
+            if (!$transaction) {
+                // Log the error if transaction is not found
+                $this->logError('Transaction Details Error', "Transaction with payment_id {$paymentId} not found.");
+                return false;
             }
 
-            // Get additional logs
-            $sql = "SELECT * FROM payment_logs WHERE transaction_id = :transaction_id";
-            $logs = $this->db->query($sql, ['transaction_id' => $result['id']]);
-
             return [
-                'transaction' => $result,
-                'logs' => $logs
+                'transaction' => $transaction,
             ];
         } catch (Exception $e) {
             $this->logError('Transaction Details Error', $e->getMessage());
-            throw new Exception("Error fetching transaction details: " . $e->getMessage());
+            return false;
         }
     }
 

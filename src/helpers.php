@@ -1,7 +1,6 @@
 <?php
 
-
-
+require_once 'Validator.php';
 function dd($value)
 {
     echo "<pre>";
@@ -16,6 +15,11 @@ function abort($code = 404)
     http_response_code($code); // Set HTTP response code
     require __DIR__ . '/../templates/http-response/' . $code . '.php';
     die();  // Stop script execution
+}
+
+function validate(array $data, array $rules): Validator
+{
+    return new Validator($data, $rules);
 }
 
 function logPaymentError($error)

@@ -3,32 +3,30 @@ require __DIR__ . '/../bootstrap.php';
 header('Content-Type: application/json');
 
 try {
-    // Validate input
-    $requiredFields = ['amount', 'currency', 'name', 'email', 'address1', 'country', 'zipcode', 'state', 'city'];
-    $input = [];
+    // Define validation rules
+    $rules = [
+        'amount' => ['required', 'numeric', 'min:0.01'],
+        'currency' => ['required', 'string', 'in:INR,AUD,USD,GBP,CAD,EUR,SGD'],
+        'name' => ['required', 'string', 'min:2'],
+        'email' => ['required', 'email'],
+        'address1' => ['required', 'string'],
+        'country' => ['required', 'string'],
+        'zipcode' => ['required', 'string'],
+        'state' => ['required', 'string'],
+        'city' => ['required', 'string']
+    ];
 
-    foreach ($requiredFields as $field) {
-        if (!isset($_POST[$field]) || empty(trim($_POST[$field]))) {
-            throw new Exception("Missing required field: $field");
-        }
-        $input[$field] = trim($_POST[$field]);
+    $validator = validate($_POST, $rules);
+
+    if (!$validator->validate()) {
+        $errors = $validator->errors();
+        // Get the first error message
+        $firstError = reset($errors)[0];
+        throw new Exception($firstError);
     }
 
-    // Validate amount
-    if (!is_numeric($input['amount']) || $input['amount'] <= 0) {
-        throw new Exception("Invalid amount");
-    }
-
-    // Validate email
-    if (!filter_var($input['email'], FILTER_VALIDATE_EMAIL)) {
-        throw new Exception("Invalid email format");
-    }
-
-    // Validate currency
-    $allowedCurrencies = ['INR', 'AUD', 'USD', 'GBP', 'CAD', 'EUR', 'SGD'];
-    if (!in_array($input['currency'], $allowedCurrencies)) {
-        throw new Exception("Invalid currency");
-    }
+    // Get sanitized data
+    $input = $validator->sanitized();
 
     // Create order using global PaymentProcessor instance
     $order = $GLOBALS['paymentProcessor']->createOrder(
