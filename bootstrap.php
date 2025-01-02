@@ -5,6 +5,8 @@ use App\Core\Database;
 use App\Core\Router;
 
 require __DIR__ . '/vendor/autoload.php';
+define('VIEW_PATH', __DIR__ . '/resources/views/');
+
 
 try {
     // Load environment variables
@@ -26,7 +28,7 @@ try {
     $db = new Database($config->get('database'));
 
     // Initialize router with services
-    $router = new Router($services);
+    $router = new Router();
 
     // Load routes
     $routes = require __DIR__ . '/routes/web.php';

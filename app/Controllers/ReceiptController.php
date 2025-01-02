@@ -16,7 +16,7 @@ class ReceiptController
                 'payment_id' => ['required', 'string']
             ];
 
-            $validator = validate($params['payment_id'], $rules);
+            $validator = validate($params, $rules);
 
             if (!$validator->validate()) {
                 ob_end_clean();

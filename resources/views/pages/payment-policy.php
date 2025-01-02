@@ -1,7 +1,8 @@
 <?php
 $pageTitle = "Payments | Quantum IT Innovation";
-include '../layouts/layout.php';
+include VIEW_PATH . 'layouts/layout.php';
 ?>
+
 <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6 mt-6">
     <h2 class="text-xl font-bold mb-4 text-center">Payment Policy</h2>
     <p class="text-sm text-gray-700 mb-4">
@@ -60,4 +61,4 @@ include '../layouts/layout.php';
     </div> -->
 </div>
 
-<?php include '../layouts/footer.php'; ?>
+<?php include VIEW_PATH . 'layouts/footer.php'; ?>

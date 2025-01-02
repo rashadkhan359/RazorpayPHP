@@ -41,7 +41,7 @@ class OrderController
                 $input['currency']
             );
 
-            $this->jsonResponse([
+            jsonResponse([
                 'success' => true,
                 'order_id' => $order->id,
                 'amount' => $input['amount'] * 100,
@@ -51,19 +51,11 @@ class OrderController
 
         } catch (Exception $e) {
             (new PaymentProcessor)->logError('Order Creation', $e->getMessage());
-            
-            $this->jsonResponse([
+
+            jsonResponse([
                 'success' => false,
                 'error' => $e->getMessage()
             ], 400);
         }
-    }
-
-    private function jsonResponse(array $data, int $status = 200): void
-    {
-        http_response_code($status);
-        header('Content-Type: application/json');
-        echo json_encode($data);
-        exit;
     }
 }

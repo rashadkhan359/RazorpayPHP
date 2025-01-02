@@ -12,6 +12,8 @@ return [
 
     'email' => $_ENV['COMPANY_EMAIL'] ?? null,
 
+    'support' => $_ENV['SUPPORT_EMAIL'] ?? 'support@company.com',
+
 
 
     // 'logo' => $ENV['COMPANY_LOGO'] ?? (isset($_ENV['COMPANY_NAME'])

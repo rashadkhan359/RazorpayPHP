@@ -76,12 +76,58 @@ class Router
 
     private function handleError(Exception $e): void
     {
-        $status = $e->getCode() ?: 500;
+        $status = $e->getCode() ?: 500;  // Default to 500 for internal server errors
         http_response_code($status);
-        header('Content-Type: application/json');
-        echo json_encode([
-            'success' => false,
-            'error' => $e->getMessage()
-        ]);
+
+        // Check if the request expects HTML or JSON
+        if ($this->isHtmlRequest()) {
+            $filePath = VIEW_PATH . 'http-response/error.php';
+            if (file_exists($filePath)) {
+                extract([
+                    'errorCode' => $status,
+                    'errorTitle' => $this->getErrorTitle($status),
+                ]);
+
+                // Include the view file
+                include $filePath;
+            } else {
+                throw new Exception("Error Page not found.");
+            }
+        } else {
+            // Return JSON error response for JSON requests
+            jsonResponse([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], $status);
+        }
+    }
+
+    private function isHtmlRequest(): bool
+    {
+        return strpos($_SERVER['HTTP_ACCEPT'], 'text/html') !== false;
+    }
+
+    /**
+     * Get error title based on the status code
+     *
+     * @param int $status
+     * @return string
+     */
+    private function getErrorTitle(int $status): string
+    {
+        switch ($status) {
+            case 404:
+                return 'Page Not Found';
+            case 500:
+                return 'Internal Server Error';
+            case 401:
+                return 'Unauthorized';
+            case 403:
+                return 'Forbidden';
+            case 405:
+                return 'Method Not Allowed';
+            default:
+                return 'An Error Occurred';
+        }
     }
 }
