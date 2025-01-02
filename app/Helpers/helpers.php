@@ -1,6 +1,7 @@
 <?php
 
-require_once 'Validator.php';
+use App\Core\Validator;
+
 function dd($value)
 {
     echo "<pre>";

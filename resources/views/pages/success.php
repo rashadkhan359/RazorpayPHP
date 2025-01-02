@@ -1,7 +1,7 @@
 <?php
 // success.php
 $pageTitle = "Payment Successful";
-include '../templates/layout.php';
+include '../layouts/layout.php';
 include '../bootstrap.php';
 
 // Validate payment ID
