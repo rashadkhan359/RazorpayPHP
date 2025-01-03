@@ -12,27 +12,18 @@ class SessionRateLimiter implements RateLimitStorage {
             $_SESSION[$sessionKey] = [];
         }
 
-        // info('Current count before cleanup: ' . count($_SESSION[$sessionKey]));
-
         // Clean up old records
         $_SESSION[$sessionKey] = array_filter($_SESSION[$sessionKey], function ($timestamp) use ($now, $window) {
             return ($now - $timestamp) < $window;
         });
 
-        // Debugging after cleanup
-        // info('Current count after cleanup: ' . count($_SESSION[$sessionKey]));
-
         // Count the number of attempts for the given route and IP
         if (count($_SESSION[$sessionKey]) >= $limit) {
-            // info("Rate limit exceeded for {$ip} on {$route}. Attempts: " . count($_SESSION[$sessionKey]));
             return false;
         }
 
         // Log the current attempt
         $_SESSION[$sessionKey][] = $now;
-
-        // Debugging after adding the current attempt
-        // info('Attempt logged. Current count: ' . count($_SESSION[$sessionKey]));
 
         return true;
     }
