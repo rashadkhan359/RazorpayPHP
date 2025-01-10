@@ -77,7 +77,7 @@ include VIEW_PATH . 'layouts/layout.php';
                 <div class="text-center animate-fade-in delay-700">
                     <p class="text-sm text-gray-500">
                         Need assistance? Contact our support team at
-                        <a href="mailto:support@company.com" class="text-red-600 hover:text-red-700 ml-1">
+                        <a href="mailto:<?php echo $GLOBALS['config']->get('app')['support'] ?>" class="text-red-600 hover:text-red-700 ml-1">
                             <?php echo $GLOBALS['config']->get('app')['support'] ?>
                         </a>
                     </p>

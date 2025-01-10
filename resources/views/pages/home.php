@@ -126,4 +126,11 @@ include VIEW_PATH . 'components/input-field.php';
     </form>
 </div>
 
-<?php include VIEW_PATH . 'layouts/footer.php'; ?>
+
+<?php
+$pageScripts = [
+    '/assets/js/payment.js',
+    '/assets/js/payment-helper.js'
+];
+include VIEW_PATH . 'layouts/footer.php';
+?>

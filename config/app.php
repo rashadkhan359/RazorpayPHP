@@ -6,6 +6,8 @@ return [
 
     'url' => $_ENV['APP_URL'] ?? 'http://localhost',
 
+    'home_url' => $_ENV['COMPANY_URL'] ?? 'http://localhost',
+
     'logo' => $ENV['COMPANY_LOGO'] ?? null,
 
     'address' => $_ENV['COMPANY_ADDRESS'] ?? null,
